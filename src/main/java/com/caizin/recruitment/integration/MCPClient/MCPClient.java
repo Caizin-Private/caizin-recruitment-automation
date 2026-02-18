@@ -18,12 +18,14 @@ public class MCPClient {
 
     public Map analyzeResume(String resumeText, String jobDescription) {
 
+        Map<String, String> requestBody = Map.of(
+                "resumeText", resumeText,
+                "jobDescription", jobDescription
+        );
+
         return webClient.post()
                 .uri("/tools/analyze_resume")
-                .bodyValue(Map.of(
-                        "resume_text", resumeText,
-                        "job_description", jobDescription
-                ))
+                .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(Map.class)
                 .block();
