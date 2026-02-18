@@ -4,9 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "ats")
 public class AtsProperties {
-    /**
-     * ATS provider identifier (e.g. "keka").
-     */
+
     private String provider;
 
     public String getProvider() {
