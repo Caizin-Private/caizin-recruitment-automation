@@ -1,0 +1,20 @@
+package com.caizin.recruitment.util;
+
+import org.apache.tika.Tika;
+import org.springframework.stereotype.Service;
+
+import java.io.File;
+
+@Service
+public class ResumeTextExtractor {
+
+    private final Tika tika = new Tika();
+
+    public String extractText(File file) {
+        try {
+            return tika.parseToString(file);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to extract text", e);
+        }
+    }
+}
