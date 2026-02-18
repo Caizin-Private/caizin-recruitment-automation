@@ -1,0 +1,24 @@
+sharepoint:
+  drive-id: ${SHAREPOINT_DRIVE_ID}
+  folder-id: ${SHAREPOINT_FOLDER_ID}
+  download-dir: ${SHAREPOINT_DOWNLOAD_DIR}
+
+azure:
+  client-id: ${AZURE_CLIENT_ID}
+  client-secret: ${AZURE_CLIENT_SECRET}
+  tenant-id: ${AZURE_TENANT_ID}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}?sslmode=require
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
