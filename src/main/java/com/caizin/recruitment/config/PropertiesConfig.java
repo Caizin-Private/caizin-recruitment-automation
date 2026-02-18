@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties({
         AtsProperties.class,
-        KekaProperties.class,
-        OpenAiProperties.class
+        OpenAiProperties.class,
+        ZohoProperties.class
 })
 public class PropertiesConfig {
 }

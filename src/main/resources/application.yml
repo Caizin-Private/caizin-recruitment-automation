@@ -3,3 +3,16 @@ openai:
   api-key: ${OPENAI_API_KEY:}
   model: ${OPENAI_MODEL:gpt-4o-mini}
   temperature: 0.2
+
+ats:
+  provider: zoho
+
+zoho:
+  base-url: https://recruit.zoho.in
+  # Prefer refresh-token based OAuth flow for production.
+  accounts-base-url: https://accounts.zoho.in
+  client-id: ${ZOHO_CLIENT_ID:}
+  client-secret: ${ZOHO_CLIENT_SECRET:}
+  refresh-token: ${ZOHO_REFRESH_TOKEN:}
+  # Optional fallback for manual testing only:
+  access-token: ${ZOHO_ACCESS_TOKEN:}
