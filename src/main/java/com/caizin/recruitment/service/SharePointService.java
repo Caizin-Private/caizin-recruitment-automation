@@ -84,9 +84,9 @@ public class SharePointService {
 
         try {
 
-            log.info("Fetching resumes from SharePoint...");
+            log.info("Fetching job folders from SharePoint...");
 
-            DriveItemCollectionResponse response =
+            DriveItemCollectionResponse folderResponse =
                     graphClient
                             .drives()
                             .byDriveId(driveId)
@@ -95,107 +95,126 @@ public class SharePointService {
                             .children()
                             .get();
 
-            List<DriveItem> files = response.getValue();
+            List<DriveItem> folders = folderResponse.getValue();
 
-            if (files == null || files.isEmpty()) {
+            if (folders == null || folders.isEmpty()) {
 
-                log.info("No resumes found.");
+                log.info("No job folders found.");
                 return;
             }
 
-            log.info("Found {} files in SharePoint folder", files.size());
+            log.info("Found {} job folders", folders.size());
 
-            for (DriveItem item : files) {
+            for (DriveItem folder : folders) {
 
-                String itemId = item.getId();
-                String fileName = item.getName();
-
-                if (fileName == null)
+                // Skip files, process folders only
+                if (folder.getFolder() == null)
                     continue;
 
-                // Only process PDFs
-                if (!fileName.toLowerCase().endsWith(".pdf")) {
+                String jobId = folder.getName();
 
-                    log.info("Skipping non-PDF file: {}", fileName);
+                log.info("Processing job folder: {}", jobId);
+
+                DriveItemCollectionResponse fileResponse =
+                        graphClient
+                                .drives()
+                                .byDriveId(driveId)
+                                .items()
+                                .byDriveItemId(folder.getId())
+                                .children()
+                                .get();
+
+                List<DriveItem> files = fileResponse.getValue();
+
+                if (files == null || files.isEmpty()) {
+
+                    log.info("No resumes found in job folder {}", jobId);
                     continue;
                 }
 
-                // Prevent duplicate processing using DB
-                if (candidateRepository.existsBySharepointItemId(itemId)) {
+                for (DriveItem item : files) {
 
-                    log.info("Candidate already exists in DB: {}", fileName);
-                    continue;
+                    String itemId = item.getId();
+                    String fileName = item.getName();
+
+                    if (fileName == null)
+                        continue;
+
+                    if (!fileName.toLowerCase().endsWith(".pdf")) {
+
+                        log.info("Skipping non-PDF file: {}", fileName);
+                        continue;
+                    }
+
+                    if (candidateRepository.existsBySharepointItemId(itemId)) {
+
+                        log.info("Already processed: {}", fileName);
+                        continue;
+                    }
+
+                    log.info("Downloading resume {} for job {}", fileName, jobId);
+
+                    File file = downloadFile(itemId, fileName);
+
+                    String resumeText =
+                            resumeTextExtractor.extractText(file);
+
+                    ParsedResume parsedResume =
+                            resumeParser.parse(resumeText);
+
+                    String fullName =
+                            parsedResume.fullName().equals("UNKNOWN")
+                                    ? fallbackName(fileName)
+                                    : parsedResume.fullName();
+
+                    String email =
+                            parsedResume.email().equals("unknown@email.com")
+                                    ? fallbackEmail(fileName)
+                                    : parsedResume.email();
+
+                    Candidate candidate =
+                            Candidate.create(
+                                    fullName,
+                                    email,
+                                    item.getParentReference().getSiteId(),
+                                    item.getParentReference().getDriveId(),
+                                    itemId,
+                                    fileName,
+                                    "SHAREPOINT",
+                                    "DOWNLOADED"
+                            );
+
+                    // IMPORTANT: SET JOB ID
+                    candidate.setJobId(jobId);
+
+                    candidateRepository.save(candidate);
+
+                    log.info("Saved candidate for job {}", jobId);
+
+                    double atsScore =
+                            resumeProcessingService.process(
+                                    file,
+                                    fullName,
+                                    email,
+                                    jobId,
+                                    candidate.getCandidateId()
+                            );
+
+                    candidate.setAtsScore(atsScore);
+                    candidate.setStatus("PROCESSED");
+
+                    candidateRepository.save(candidate);
+
+                    log.info(
+                            "ATS score {} saved for {} (job {})",
+                            atsScore,
+                            email,
+                            jobId
+                    );
                 }
-
-                log.info("Downloading resume: {}", fileName);
-
-                File file = downloadFile(itemId, fileName);
-
-                log.info("Saved locally at: {}", file.getAbsolutePath());
-
-                // Extract resume text
-                String resumeText =
-                        resumeTextExtractor.extractText(file);
-
-                // Parse resume
-                ParsedResume parsedResume =
-                        resumeParser.parse(resumeText);
-
-                // Determine correct full name
-                String fullName =
-                        parsedResume.fullName().equals("UNKNOWN")
-                                ? fallbackName(fileName)
-                                : parsedResume.fullName();
-
-                // Determine correct email
-                String email =
-                        parsedResume.email().equals("unknown@email.com")
-                                ? fallbackEmail(fileName)
-                                : parsedResume.email();
-
-                log.info("Parsed Name: {}", fullName);
-                log.info("Parsed Email: {}", email);
-
-                // Create candidate
-                Candidate candidate =
-                        Candidate.create(
-                                fullName,
-                                email,
-                                item.getParentReference().getSiteId(),
-                                item.getParentReference().getDriveId(),
-                                itemId,
-                                fileName,
-                                "SHAREPOINT",
-                                "DOWNLOADED"
-                        );
-
-                candidateRepository.save(candidate);
-
-                log.info("Candidate saved in DB with ID: {}",
-                        candidate.getCandidateId());
-
-                // Calculate ATS score
-                double atsScore =
-                        resumeProcessingService.process(
-                                file,
-                                fullName,
-                                email
-                        );
-
-                // Update candidate with ATS score
-                candidate.setAtsScore(atsScore);
-                candidate.setStatus("PROCESSED");
-
-                candidateRepository.save(candidate);
-
-                log.info(
-                        "ATS score {} saved for candidate {}",
-                        atsScore,
-                        email
-                );
             }
 
-            log.info("SharePoint resume processing completed.");
+            log.info("All job folders processed successfully.");
 
         } catch (Exception e) {
 

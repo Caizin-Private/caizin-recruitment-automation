@@ -4,59 +4,75 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class JDTextExtractor {
 
     private final ResumeTextExtractor textExtractor;
 
-    // Cache JD text so we don't re-read PDF every time
-    private String cachedJDText;
+    // Cache JD text per jobId
+    private final ConcurrentHashMap<String, String> jdCache =
+            new ConcurrentHashMap<>();
 
     public JDTextExtractor(ResumeTextExtractor textExtractor) {
         this.textExtractor = textExtractor;
     }
 
     /**
-     * Returns Job Description text extracted from jd.pdf
+     * Get JD text based on jobId
+     * Example: jd/JOB123.pdf
      */
-    public String getJDText() {
+    public String getJDText(String jobId) {
 
-        // Return cached version if already loaded
-        if (cachedJDText != null) {
-            return cachedJDText;
+        // return cached version if exists
+        if (jdCache.containsKey(jobId)) {
+            return jdCache.get(jobId);
         }
 
         try {
 
-            // Load jd.pdf from resources folder
-            File jdFile =
-                    new ClassPathResource("jd.pdf").getFile();
+            String jdPath = "jd/" + jobId + ".pdf";
 
-            // Extract text using Apache Tika
-            cachedJDText =
+            File jdFile =
+                    new ClassPathResource(jdPath).getFile();
+
+            String jdText =
                     textExtractor.extractText(jdFile);
 
-            if (cachedJDText == null || cachedJDText.isBlank()) {
+            if (jdText == null || jdText.isBlank()) {
+
                 throw new RuntimeException(
-                        "JD text extraction returned empty content");
+                        "JD text empty for jobId: " + jobId
+                );
             }
 
-            return cachedJDText;
+            jdCache.put(jobId, jdText);
+
+            return jdText;
 
         } catch (Exception e) {
 
             throw new RuntimeException(
-                    "Failed to load or extract JD PDF",
+                    "Failed to load JD for jobId: " + jobId,
                     e
             );
         }
     }
 
     /**
-     * Optional: force reload JD from disk
+     * Force reload JD for specific jobId
      */
-    public void reloadJD() {
-        cachedJDText = null;
+    public void reloadJD(String jobId) {
+
+        jdCache.remove(jobId);
+    }
+
+    /**
+     * Clear entire cache
+     */
+    public void clearCache() {
+
+        jdCache.clear();
     }
 }
