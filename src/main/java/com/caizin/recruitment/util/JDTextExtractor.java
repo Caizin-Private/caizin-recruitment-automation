@@ -23,16 +23,16 @@ public class JDTextExtractor {
      * Get JD text based on jobId
      * Example: jd/JOB123.pdf
      */
-    public String getJDText(String jobId) {
+    public String getJDText(String jobOpeningId) {
 
         // return cached version if exists
-        if (jdCache.containsKey(jobId)) {
-            return jdCache.get(jobId);
+        if (jdCache.containsKey(jobOpeningId)) {
+            return jdCache.get(jobOpeningId);
         }
 
         try {
 
-            String jdPath = "jd/" + jobId + ".pdf";
+            String jdPath = "jd/" + jobOpeningId + ".pdf";
 
             File jdFile =
                     new ClassPathResource(jdPath).getFile();
@@ -43,18 +43,18 @@ public class JDTextExtractor {
             if (jdText == null || jdText.isBlank()) {
 
                 throw new RuntimeException(
-                        "JD text empty for jobId: " + jobId
+                        "JD text empty for jobId: " + jobOpeningId
                 );
             }
 
-            jdCache.put(jobId, jdText);
+            jdCache.put(jobOpeningId, jdText);
 
             return jdText;
 
         } catch (Exception e) {
 
             throw new RuntimeException(
-                    "Failed to load JD for jobId: " + jobId,
+                    "Failed to load JD for jobId: " + jobOpeningId,
                     e
             );
         }

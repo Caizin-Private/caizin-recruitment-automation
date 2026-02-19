@@ -111,9 +111,9 @@ public class SharePointService {
                 if (folder.getFolder() == null)
                     continue;
 
-                String jobId = folder.getName();
+                String jobOpeningId = folder.getName();
 
-                log.info("Processing job folder: {}", jobId);
+                log.info("Processing job folder: {}", jobOpeningId);
 
                 DriveItemCollectionResponse fileResponse =
                         graphClient
@@ -128,7 +128,7 @@ public class SharePointService {
 
                 if (files == null || files.isEmpty()) {
 
-                    log.info("No resumes found in job folder {}", jobId);
+                    log.info("No resumes found in job folder {}", jobOpeningId);
                     continue;
                 }
 
@@ -152,7 +152,7 @@ public class SharePointService {
                         continue;
                     }
 
-                    log.info("Downloading resume {} for job {}", fileName, jobId);
+                    log.info("Downloading resume {} for job {}", fileName, jobOpeningId);
 
                     File file = downloadFile(itemId, fileName);
 
@@ -185,18 +185,18 @@ public class SharePointService {
                             );
 
                     // IMPORTANT: SET JOB ID
-                    candidate.setJobId(jobId);
+                    candidate.setJobOpeningId(jobOpeningId);
 
                     candidateRepository.save(candidate);
 
-                    log.info("Saved candidate for job {}", jobId);
+                    log.info("Saved candidate for job {}", jobOpeningId);
 
                     double atsScore =
                             resumeProcessingService.process(
                                     file,
                                     fullName,
                                     email,
-                                    jobId,
+                                    jobOpeningId,
                                     candidate.getCandidateId()
                             );
 
@@ -209,7 +209,7 @@ public class SharePointService {
                             "ATS score {} saved for {} (job {})",
                             atsScore,
                             email,
-                            jobId
+                            jobOpeningId
                     );
                 }
             }
