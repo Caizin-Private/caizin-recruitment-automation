@@ -18,6 +18,8 @@ public class ResumeAnalysisService {
     }
 
     public ResumeAnalysis saveAnalysis(
+            String candidateId,
+            String jobId,
             String candidateName,
             String candidateEmail,
             Double atsScore,
@@ -26,38 +28,28 @@ public class ResumeAnalysisService {
 
         ResumeAnalysis analysis = new ResumeAnalysis();
 
+        analysis.setCandidateId(candidateId);
+        analysis.setJobId(jobId);
+
         analysis.setCandidateName(candidateName);
         analysis.setCandidateEmail(candidateEmail);
+
         analysis.setAtsScore(atsScore);
 
-        analysis.setTechnicalScore(
-                getInteger(aiAnalysis, "technical_score"));
+        analysis.setTechnicalScore(getInt(aiAnalysis, "technical_score"));
+        analysis.setExperienceScore(getInt(aiAnalysis, "experience_score"));
+        analysis.setCommunicationScore(getInt(aiAnalysis, "communication_score"));
+        analysis.setLeadershipScore(getInt(aiAnalysis, "leadership_score"));
 
-        analysis.setExperienceScore(
-                getInteger(aiAnalysis, "experience_score"));
-
-        analysis.setCommunicationScore(
-                getInteger(aiAnalysis, "communication_score"));
-
-        analysis.setLeadershipScore(
-                getInteger(aiAnalysis, "leadership_score"));
-
-        analysis.setSkills(
-                aiAnalysis.get("skills").toString());
-
-        analysis.setMissingSkills(
-                aiAnalysis.get("missing_skills").toString());
-
-        analysis.setRiskFlags(
-                aiAnalysis.get("risk_flags").toString());
+        analysis.setSkills(aiAnalysis.getOrDefault("skills", "").toString());
+        analysis.setMissingSkills(aiAnalysis.getOrDefault("missing_skills", "").toString());
+        analysis.setRiskFlags(aiAnalysis.getOrDefault("risk_flags", "").toString());
 
         return repository.save(analysis);
     }
 
-    private Integer getInteger(
-            Map<String, Object> map,
-            String key
-    ) {
+    private Integer getInt(Map<String, Object> map, String key) {
+
         Object value = map.get(key);
 
         if (value instanceof Number)
