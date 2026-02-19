@@ -1,29 +1,48 @@
 package com.caizin.recruitment.dto;
 
 public class JobDto {
-    private String jobId;
+
+    private String id;                // Zoho internal ID
+    private String jobOpeningId;      // ZR_1_JOB (custom job code)
     private String title;
     private String description;
     private String experience;
     private String department;
 
-    public JobDto() {
-    }
+    public JobDto() {}
 
-    public JobDto(String jobId, String title, String description, String experience, String department) {
-        this.jobId = jobId;
+    public JobDto(
+            String id,
+            String jobOpeningId,
+            String title,
+            String description,
+            String experience,
+            String department
+    ) {
+        this.id = id;
+        this.jobOpeningId = jobOpeningId;
         this.title = title;
         this.description = description;
         this.experience = experience;
         this.department = department;
     }
 
+    // 🔹 Internal Zoho ID
     public String getJobId() {
-        return jobId;
+        return id;
     }
 
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
+    public void setJobId(String id) {
+        this.id = id;
+    }
+
+    // 🔹 Custom Job Opening ID (ZR_1_JOB)
+    public String getJobOpeningId() {
+        return jobOpeningId;
+    }
+
+    public void setJobOpeningId(String jobOpeningId) {
+        this.jobOpeningId = jobOpeningId;
     }
 
     public String getTitle() {
@@ -58,4 +77,3 @@ public class JobDto {
         this.department = department;
     }
 }
-

@@ -102,15 +102,16 @@ public class ZohoRecruitAtsAdapter implements AtsPlatform {
     }
 
     private static JobDto mapJob(JsonNode node) {
-        // Mapping is defensive and tolerant to missing fields.
-        String jobId = text(node, "id");
+        String id = text(node, "id");
+        String jobOpeningId = text(node, "Job_Opening_ID");
         String title = text(node, "Posting_Title");
         String description = text(node, "Job_Description");
         String experience = text(node, "Work_Experience");
         String department = text(node, "Industry");
-        log.debug("Mapped Zoho job id={}, title={}", jobId, title);
+        log.debug("Mapped Zoho job id={}, title={}", id, title);
+        log.debug("Mapped Zoho job internalId={}, jobOpeningId={}", id, jobOpeningId);
 
-        return new JobDto(jobId, title, description, experience, department);
+        return new JobDto(id,jobOpeningId, title, description, experience, department);
     }
 
     private static String text(JsonNode node, String field) {

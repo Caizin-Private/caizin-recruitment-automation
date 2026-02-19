@@ -2,6 +2,7 @@ package com.caizin.recruitment.service;
 
 import com.caizin.recruitment.dto.JobDto;
 import com.caizin.recruitment.dto.ScreeningQuestionDto;
+import com.caizin.recruitment.entity.ParsedResume;
 
 import java.util.List;
 
@@ -16,5 +17,5 @@ public interface LlmService {
      * @param job the job (title, description, experience, department)
      * @return list of screening questions (type + question text)
      */
-    List<ScreeningQuestionDto> generateQuestions(JobDto job);
+    List<ScreeningQuestionDto> generatePersonalizedQuestions(JobDto job, ParsedResume resume);
 }

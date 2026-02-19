@@ -5,6 +5,7 @@ import com.caizin.recruitment.dto.JobDto;
 import com.caizin.recruitment.dto.OpenAiRequestDto;
 import com.caizin.recruitment.dto.OpenAiResponseDto;
 import com.caizin.recruitment.dto.ScreeningQuestionDto;
+import com.caizin.recruitment.entity.ParsedResume;
 import com.caizin.recruitment.exception.OpenAiException;
 import com.caizin.recruitment.integration.openai.OpenAiClient;
 import com.caizin.recruitment.service.LlmService;
@@ -37,12 +38,19 @@ public class OpenAiLlmService implements LlmService {
     }
 
     @Override
-    public List<ScreeningQuestionDto> generateQuestions(JobDto job) {
+    public List<ScreeningQuestionDto> generatePersonalizedQuestions(
+            JobDto job,
+            ParsedResume resume
+    ) {
         validateJob(job);
+        validateResume(resume);
 
-        String prompt = buildPrompt(job);
+        String prompt = buildPersonalizedPrompt(job, resume);
+
         String model = requireModel();
-        Double temperature = properties.getTemperature() != null ? properties.getTemperature() : 0.2;
+        Double temperature = properties.getTemperature() != null
+                ? properties.getTemperature()
+                : 0.2;
 
         OpenAiRequestDto request = new OpenAiRequestDto(
                 model,
@@ -56,10 +64,15 @@ public class OpenAiLlmService implements LlmService {
         List<ScreeningQuestionDto> questions = parseQuestionsJson(content);
 
         validateQuestions(questions);
-        log.info("Generated {} screening question(s) for jobId={}", questions.size(), job.getJobId());
+
+        log.info("Generated {} personalized questions for candidate {} and jobId={}",
+                questions.size(),
+                resume.fullName(),
+                job.getJobId());
 
         return questions;
     }
+
 
     private static void validateJob(JobDto job) {
         if (job == null) {
@@ -71,45 +84,80 @@ public class OpenAiLlmService implements LlmService {
             throw new OpenAiException("Job must have at least title or description");
         }
     }
+    private static void validateResume(ParsedResume resume) {
+        if (resume == null) {
+            throw new OpenAiException("ParsedResume must not be null");
+        }
+    }
 
-    private String buildPrompt(JobDto job) {
+
+    private String buildPersonalizedPrompt(
+            JobDto job,
+            ParsedResume resume
+    ) {
+
         return """
-                You are a senior technical interviewer.
+        You are a senior technical interviewer.
 
-                Generate 10 high-quality descriptive screening questions for the following job:
+        Generate 10 highly personalized screening questions
+        for the candidate based on BOTH:
 
-                Job Title: %s
-                Department: %s
-                Experience Level: %s
+        1) Job Description
+        2) Candidate Resume
 
-                Job Description:
-                %s
+        ================================
+        JOB DETAILS
+        ================================
+        Job Title: %s
+        Department: %s
+        Required Experience: %s
 
-                Rules:
-                - Only descriptive questions
-                - No MCQs
-                - No coding challenges
-                - Include experience validation questions
-                - Include scenario-based questions
-                - Include architecture/design questions
-                - Avoid generic questions
+        Job Description:
+        %s
 
-                Return JSON format:
-                {
-                  "questions": [
-                    {
-                      "type": "...",
-                      "question": "..."
-                    }
-                  ]
-                }
-                """.formatted(
+        ================================
+        CANDIDATE PROFILE
+        ================================
+        Name: %s
+        Email: %s
+        Years of Experience: %.1f
+        Skills: %s
+        Projects: %s
+
+        ================================
+        RULES
+        ================================
+        - Questions must reference candidate's experience.
+        - Validate skills against job requirements.
+        - Ask about listed projects.
+        - Include architecture/design questions.
+        - Include experience-depth validation.
+        - No MCQs.
+        - No coding challenges.
+        - Avoid generic textbook questions.
+
+        Return JSON format:
+        {
+          "questions": [
+            {
+              "type": "...",
+              "question": "..."
+            }
+          ]
+        }
+        """.formatted(
                 safe(job.getTitle()),
                 safe(job.getDepartment()),
                 safe(job.getExperience()),
-                safe(job.getDescription())
+                safe(job.getDescription()),
+                safe(resume.fullName()),
+                safe(resume.email()),
+                resume.yearsOfExperience(),
+                resume.skills(),
+                resume.projects()
         );
     }
+
 
     private String requireModel() {
         String model = properties.getModel();
