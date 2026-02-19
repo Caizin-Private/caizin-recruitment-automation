@@ -2,7 +2,7 @@ package com.caizin.recruitment.dto;
 
 public class JobDto {
 
-    private String id;                // Zoho internal ID
+    private String zohoJobid;                // Zoho internal ID
     private String jobOpeningId;      // ZR_1_JOB (custom job code)
     private String title;
     private String description;
@@ -12,14 +12,14 @@ public class JobDto {
     public JobDto() {}
 
     public JobDto(
-            String id,
+            String zohoJobid,
             String jobOpeningId,
             String title,
             String description,
             String experience,
             String department
     ) {
-        this.id = id;
+        this.zohoJobid = zohoJobid;
         this.jobOpeningId = jobOpeningId;
         this.title = title;
         this.description = description;
@@ -28,12 +28,13 @@ public class JobDto {
     }
 
     // 🔹 Internal Zoho ID
-    public String getJobId() {
-        return id;
+
+    public String getZohoJobid() {
+        return zohoJobid;
     }
 
-    public void setJobId(String id) {
-        this.id = id;
+    public void setZohoJobid(String zohoJobid) {
+        this.zohoJobid = zohoJobid;
     }
 
     // 🔹 Custom Job Opening ID (ZR_1_JOB)

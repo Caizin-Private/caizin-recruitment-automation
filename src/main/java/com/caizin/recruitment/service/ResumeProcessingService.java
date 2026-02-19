@@ -52,14 +52,14 @@ public class ResumeProcessingService {
             File file,
             String senderName,
             String senderEmail,
-            String jobId,
+            String jobOpeningId,
             String candidateId
     ) {
 
         try {
 
             log.info("Processing resume for jobId={}, candidateId={}",
-                    jobId, candidateId);
+                    jobOpeningId, candidateId);
 
             String resumeText =
                     extractor.extractText(file);
@@ -82,7 +82,7 @@ public class ResumeProcessingService {
                             : parsedResume.fullName();
 
             String jdText =
-                    jdExtractor.getJDText(jobId);
+                    jdExtractor.getJDText(jobOpeningId);
 
             JDRequirements jdRequirements =
                     jdParser.parse(jdText);
@@ -99,13 +99,13 @@ public class ResumeProcessingService {
                     mcpClient.analyzeResume(
                             resumeText,
                             jdText,
-                            jobId,
+                            jobOpeningId,
                             candidateId
                     );
 
             resumeAnalysisService.saveAnalysis(
                     candidateId,
-                    jobId,
+                    jobOpeningId,
                     fullName,
                     email,
                     atsScore,

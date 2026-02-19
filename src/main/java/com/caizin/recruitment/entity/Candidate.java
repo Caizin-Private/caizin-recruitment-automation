@@ -16,8 +16,14 @@ public class Candidate {
     @Id
     private String candidateId;
 
-    @Column(name = "job_id")
-    private String jobId;
+    @Column(name = "zoho_candidate_id")
+    private String zohoCandidateId;
+
+    @Column(name = "job_opening_id")
+    private String jobOpeningId;   // ZR_1_JOB
+
+    @Column(name = "zoho_job_id")  //
+    private String zohoJobId;
 
     private String fullName;
 
@@ -42,6 +48,7 @@ public class Candidate {
     private Double atsScore;
 
 
+
     public static Candidate create(
             String fullName,
             String email,
@@ -55,6 +62,7 @@ public class Candidate {
         Candidate c = new Candidate();
 
         c.candidateId = UUID.randomUUID().toString();
+        c.zohoCandidateId = null;
         c.fullName = fullName;
         c.email = email;
         c.sharepointSiteId = siteId;

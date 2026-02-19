@@ -68,7 +68,7 @@ public class OpenAiLlmService implements LlmService {
         log.info("Generated {} personalized questions for candidate {} and jobId={}",
                 questions.size(),
                 resume.fullName(),
-                job.getJobId());
+                job.getJobOpeningId());
 
         return questions;
     }
