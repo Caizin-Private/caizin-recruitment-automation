@@ -8,7 +8,7 @@ import com.caizin.recruitment.integration.ats.AtsPlatform;
 import com.caizin.recruitment.parser.ResumeParser;
 import com.caizin.recruitment.repository.CandidateRepository;
 import com.caizin.recruitment.util.ResumeTextExtractor;
-import lombok.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -49,12 +49,12 @@ public class CandidateQuestionGenerationService {
         List<JobDto> jobs = atsPlatform.fetchJobs();
 
         JobDto job = jobs.stream()
-                .filter(j -> j.getJobOpeningId().equals(candidate.getJobOpeningId()))
+                .filter(j -> j.getJobOpeningId().equals(candidate.getJobId()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Matching job not found in ATS"));
 
         // 3️⃣ Load resume file from disk
-        File resumeFile = new File(downloadDir, candidate.getResumeFileName());
+        File resumeFile = new File(downloadDir, candidate.getFileName());
 
         // 4️⃣ Extract text
         String resumeText = resumeTextExtractor.extractText(resumeFile);

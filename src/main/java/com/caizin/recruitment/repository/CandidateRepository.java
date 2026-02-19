@@ -23,5 +23,6 @@ public interface CandidateRepository extends JpaRepository<Candidate, String> {
      * Fetch candidate by email (useful for queries)
      */
     Optional<Candidate> findByEmail(String email);
+    Optional<Candidate> findTopByStatus(String status);
 
 }

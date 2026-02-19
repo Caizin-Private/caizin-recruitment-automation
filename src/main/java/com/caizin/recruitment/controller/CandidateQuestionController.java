@@ -24,14 +24,19 @@ public class CandidateQuestionController {
     }
 
     @PostMapping("/generate")
-    public JobQuestionResponseDto generateQuestions(
-    ) {
+    public JobQuestionResponseDto generateQuestions() {
 
         // Step 1: Fetch resumes from SharePoint
         sharePointService.processResumes();
 
-        // Step 2: Let your service handle resume + job internally
-        return questionService.generateForFirstJobAndResume();
+        // Step 2: Generate questions
+        List<ScreeningQuestionDto> questions =
+                questionService.generateForFirstCandidate();
 
+        return new JobQuestionResponseDto(
+                "FIRST_CANDIDATE",
+                questions
+        );
     }
+
 }
