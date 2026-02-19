@@ -15,6 +15,12 @@ public class ResumeAnalysis {
     @Column(nullable = false, updatable = false)
     private UUID id;
 
+    @Column(name = "candidate_id", nullable = false)
+    private String candidateId;
+
+    @Column(name = "job_id", nullable = false)
+    private String jobId;
+
     @Column(name = "candidate_name")
     private String candidateName;
 
@@ -36,7 +42,7 @@ public class ResumeAnalysis {
     @Column(name = "ats_score")
     private Double atsScore;
 
-    @Column(name = "skills", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String skills;
 
     @Column(name = "missing_skills", columnDefinition = "TEXT")

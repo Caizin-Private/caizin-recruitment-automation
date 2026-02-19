@@ -16,6 +16,9 @@ public class Candidate {
     @Id
     private String candidateId;
 
+    @Column(name = "job_id")
+    private String jobId;
+
     private String fullName;
 
     @Column(unique = true)
