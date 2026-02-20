@@ -1,9 +1,9 @@
 package com.caizin.recruitment.integration.zoho;
 
 import com.caizin.recruitment.config.ZohoProperties;
+import com.caizin.recruitment.dto.ScreeningQuestionDto;
 import com.caizin.recruitment.entity.Candidate;
 import com.caizin.recruitment.exception.IntegrationException;
-import com.caizin.recruitment.integration.ats.AtsPlatform;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -222,4 +223,115 @@ public class ZohoCandidateAtsAdapter {
             throw new IntegrationException("Error associating candidate with job", e);
         }
     }
+
+    public void uploadScreeningQuestionsToApplication(String zohoCandidateId,
+                                                      String zohoJobId,
+                                                      List<ScreeningQuestionDto> questions) {
+        try {
+            String accessToken = tokenProvider.getAccessToken();
+
+            // Step 1: Get Application ID
+            String applicationId = getApplicationId(zohoCandidateId, zohoJobId, accessToken);
+            log.info("Found application ID {} for candidate {}", applicationId, zohoCandidateId);
+
+            // Step 2: Format questions as readable text
+            StringBuilder content = new StringBuilder();
+            for (int i = 0; i < questions.size(); i++) {
+                ScreeningQuestionDto q = questions.get(i);
+                content.append(i + 1).append(". [").append(q.getType()).append("]\n");
+                content.append(q.getQuestion()).append("\n\n");
+            }
+
+            String bodyJson = """
+    {
+      "data": [
+        {
+          "MulAI_Screening_Questionsti_Line_1": %s
+        }
+      ]
+    }
+    """.formatted(objectMapper.writeValueAsString(content.toString()));
+
+            HttpUrl url = HttpUrl.parse(properties.getBaseUrl())
+                    .newBuilder()
+                    .addPathSegments("recruit/v2/Applications")
+                    .addPathSegment(applicationId)
+                    .build();
+
+            log.info("Uploading screening questions to application {} via URL: {}", applicationId, url);
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .put(RequestBody.create(bodyJson, MediaType.parse("application/json")))
+                    .addHeader("Authorization", "Zoho-oauthtoken " + accessToken)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                String raw = response.body() != null ? response.body().string() : "";
+                log.info("Upload screening questions response: {}", raw);
+
+                if (!response.isSuccessful()) {
+                    throw new IntegrationException(
+                            "Failed to upload screening questions. HTTP "
+                                    + response.code() + " Body: " + raw);
+                }
+
+                log.info("Screening questions uploaded to application {} for candidate {}",
+                        applicationId, zohoCandidateId);
+            }
+
+        } catch (IOException e) {
+            throw new IntegrationException("Error uploading screening questions", e);
+        }
+    }
+
+    private String getApplicationId(String zohoCandidateId,
+                                    String zohoJobId,
+                                    String accessToken) throws IOException {
+
+        HttpUrl url = HttpUrl.parse(properties.getBaseUrl())
+                .newBuilder()
+                .addPathSegments("recruit/v2/Applications")
+                .build();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .addHeader("Authorization", "Zoho-oauthtoken " + accessToken)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        try (Response response = httpClient.newCall(request).execute()) {
+            String raw = response.body() != null ? response.body().string() : "";
+            log.info("Get application response: {}", raw);
+
+            if (!response.isSuccessful()) {
+                throw new IntegrationException(
+                        "Failed to get application ID. HTTP "
+                                + response.code() + " Body: " + raw);
+            }
+
+            JsonNode root = objectMapper.readTree(raw);
+            JsonNode dataNode = root.get("data");
+
+            if (dataNode == null || !dataNode.isArray() || dataNode.size() == 0) {
+                throw new IntegrationException(
+                        "No application found for candidate " + zohoCandidateId);
+            }
+
+            // Find application matching both candidate and job
+            for (JsonNode app : dataNode) {
+                String candidateId = app.get("$Candidate_Id").asText();
+                String jobId = app.get("$Job_Opening_Id").asText();
+
+                if (zohoCandidateId.equals(candidateId) && zohoJobId.equals(jobId)) {
+                    return app.get("id").asText();
+                }
+            }
+
+            throw new IntegrationException("No application found for candidate " + zohoCandidateId);
+        }
+    }
+
 }
