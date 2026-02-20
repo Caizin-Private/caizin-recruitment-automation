@@ -27,5 +27,10 @@ public class ScreeningQuestionDto {
     public void setQuestion(String question) {
         this.question = question;
     }
+
+    @Override
+    public String toString() {
+        return "ScreeningQuestionDto{type='" + type + "', question='" + question + "'}";
+    }
 }
 

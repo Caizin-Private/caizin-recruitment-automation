@@ -9,6 +9,7 @@ import com.caizin.recruitment.entity.ParsedResume;
 import com.caizin.recruitment.exception.OpenAiException;
 import com.caizin.recruitment.integration.openai.OpenAiClient;
 import com.caizin.recruitment.service.LlmService;
+import com.caizin.recruitment.service.pipeline.ScreeningQuestionsContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -30,11 +31,13 @@ public class OpenAiLlmService implements LlmService {
     private final OpenAiClient openAiClient;
     private final OpenAiProperties properties;
     private final ObjectMapper objectMapper;
+    private final ScreeningQuestionsContext screeningQuestionsContext; // ← add this
 
-    public OpenAiLlmService(OpenAiClient openAiClient, OpenAiProperties properties, ObjectMapper objectMapper) {
+    public OpenAiLlmService(OpenAiClient openAiClient, OpenAiProperties properties, ObjectMapper objectMapper, ScreeningQuestionsContext screeningQuestionsContext) {
         this.openAiClient = Objects.requireNonNull(openAiClient, "openAiClient");
         this.properties = Objects.requireNonNull(properties, "properties");
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper");
+        this.screeningQuestionsContext = screeningQuestionsContext;
     }
 
     @Override
@@ -65,10 +68,14 @@ public class OpenAiLlmService implements LlmService {
 
         validateQuestions(questions);
 
+        // ← store in context so next step in sequence can use without passing as param
+        screeningQuestionsContext.setQuestions(questions);
+
+
         log.info("Generated {} personalized questions for candidate {} and jobId={}",
                 questions.size(),
                 resume.fullName(),
-                job.getJobId());
+                job.getJobOpeningId());
 
         return questions;
     }

@@ -102,16 +102,16 @@ public class ZohoRecruitAtsAdapter implements AtsPlatform {
     }
 
     private static JobDto mapJob(JsonNode node) {
-        String id = text(node, "id");
+        String zohoJobid = text(node, "id");
         String jobOpeningId = text(node, "Job_Opening_ID");
         String title = text(node, "Posting_Title");
         String description = text(node, "Job_Description");
         String experience = text(node, "Work_Experience");
         String department = text(node, "Industry");
-        log.debug("Mapped Zoho job id={}, title={}", id, title);
-        log.debug("Mapped Zoho job internalId={}, jobOpeningId={}", id, jobOpeningId);
+        log.debug("Mapped Zoho job id={}, title={}", zohoJobid, title);
+        log.debug("Mapped Zoho job internalId={}, jobOpeningId={}", zohoJobid, jobOpeningId);
 
-        return new JobDto(id,jobOpeningId, title, description, experience, department);
+        return new JobDto(zohoJobid,jobOpeningId, title, description, experience, department);
     }
 
     private static String text(JsonNode node, String field) {

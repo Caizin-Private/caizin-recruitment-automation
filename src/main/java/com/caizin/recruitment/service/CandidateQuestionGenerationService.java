@@ -49,7 +49,7 @@ public class CandidateQuestionGenerationService {
         List<JobDto> jobs = atsPlatform.fetchJobs();
 
         JobDto job = jobs.stream()
-                .filter(j -> j.getJobOpeningId().equals(candidate.getJobId()))
+                .filter(j -> j.getJobOpeningId().equals(candidate.getJobOpeningId()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Matching job not found in ATS"));
 
